@@ -1,0 +1,33 @@
+# gemini_agent.py
+
+import google.generativeai as genai
+import os
+
+# Replace with your actual Gemini API key
+API_KEY = "YOUR_API_KEY"
+
+def initialize_gemini(api_key):
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel("gemini-pro")
+    return model
+
+def run_agent():
+    # Initialize the model
+    model = initialize_gemini(API_KEY)
+
+    print("🔮 Gemini Agent Ready (type 'exit' to quit)")
+    
+    while True:
+        user_input = input("\nYou: ")
+        if user_input.lower() in ("exit", "quit"):
+            print("👋 Exiting Gemini Agent.")
+            break
+        
+        try:
+            response = model.generate_content(user_input)
+            print("\nGemini:", response.text)
+        except Exception as e:
+            print("⚠️ Error:", e)
+
+if __name__ == "__main__":
+    run_agent()
