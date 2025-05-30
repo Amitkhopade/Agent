@@ -1,0 +1,45 @@
+How to choose an open-source LLM for Enterprise use?
+Large language models (LLMs) are generative AI models that can be used for multiple purposes, such as summarization, code generation, and question-answering. Recent “decoder-only” models like GPT-3, BLOOM, and Falcon are trained on massive web and open-source datasets to predict the next token (word) in a sentence. This mechanism of finding the next word (token) allows LLMs to learn the intricacies of language along with the source truth much better than other existing deep learning models, making them very powerful.
+In the context of Enterprises like Arcesium, LLMs can be used to summarize meeting conversations, create unit test cases, convert code (Perl to Python, text to SQL commands, etc.), train intelligent chatbots on documentation, and more. Recently, there has been a surge in the number of LLMs released by multiple contributors and this blog aims to help readers follow a framework for choosing the right LLM for their task at hand.
+Factors to evaluate while choosing an LLM
+1. Licenses
+When choosing an LLM, it is essential to consider the license under which it is released. Proprietary algorithms like GPT-4, Gemini, and Claude are commercially licensed and available through API’s, meaning the data has to leave the Enterprise network. Typically, open-source LLMs are released under permissive licenses like Apache 2.0. These permissive licenses offer more freedom and allow us to use them for commercial offerings. It should be noted, however, that not all algorithms are released under open-source licenses. For example, Llama v1 by Meta was released under a non-commercial research license.
+A model’s license is determined not only by its pre-trained weights but also by the data with which it was trained. For example, OpenLLaMa is an open-source model that uses the Llama architecture but was trained on open-source data.
+
+You can check the performance of these models on various benchmarks here.
+2. Model Memory Requirements
+Given that LLMs have a vast number of transformer blocks, they are generally massive in terms of memory. Transformers are the basic building blocks of LLMs, and each transformer block has a set of learnable parameters that get updated in the training stage of LLMs. These parameters define the size of an LLM (or any deep learning model, for that matter). The larger the number of parameters, the larger the memory size of the model.
+Model size can be further reduced by using techniques such as quantization, pruning, and knowledge distillation. Quantization is a process of projecting 32-bit floating-point numbers to lower precision spaces like FP16 and INT8. This projection on lower precision spaces significantly reduces the memory footprint occupied by these models.
+Memory reduction based on the precision:
+FP32: 4 bytes/param → 4 GB / billion params
+FP16: 2 bytes/param → 2 GB / billion params
+INT8: 1 byte/param → 1 GB / billion params
+In addition to these parameters, we will also have to store gradients, optimizers, and other data in the memory, which further increases the RAM requirement. (Since parallelization is a key aspect of deep learning algorithms and GPUs, we refer to GPU’s VRAM when we mention RAM here.)
+Calculating the memory footprint of an FP16 GPT-3 model with 175 billion parameters:
+Model Size = Number of parameters (in billions) * RAM required for a billion parameters = 175 * 2 GB = 350 GB
+To load a model like GPT-3 in memory for inference, we would at least need a machine with 350 GB RAM (which is difficult to procure). So, it’s advisable to first check with small LLMs for the task at hand and then explore other LLMs to improve their performance.
+3. Models performance for the task
+Although LLMs are multipurpose language models, the performance of a model varies based on the task. Model performance can mainly be attributed to the data and the depth to which these models are trained. For example, Vicuna performs well on the summarization task but poorly on code generation tasks. Also, if we consider the same-sized open-source equivalent of Llama v1 (i.e., OpenLLaMa), it performs poorly on the summarization task. These models mainly differ in the data with which they are trained but have a significant variation in the performance of the respective model.
+Fine-tuning vs. Prompt Engineering
+Prompt engineering is a human-driven process of improving the output result by changing the prompts. Depending on the model chosen, the results can be drastically improved simply by changing the prompts. Here is a good resource on prompt engineering.
+Context learning is a process of passing a few examples within the input prompt and expecting the LLM to learn the same pattern. Providing examples helps LLMs learn faster.
+Zero-shot inference: Directly expecting the output by providing the task in the input prompt.
+One-shot inference: Provide 1 example of the task and then a task to be performed as an input prompt.
+Few-shot inference: Provide more than 1 example of the task and then a task to be performed as an input prompt.
+Context learning heavily depends on the LLM’s context length window. An LLM with a small context window will leave little scope for few-shot inference and leave us no option but to explore fine-tuning the model.
+Instruct Fine-tuning
+Instruct fine-tuning is a process of fine-tuning all the parameters of a model by training the model on a set of prompts and outputs. Since we are changing all the model parameters, the fine-tuned model might not perform as well as it did on other general-purpose tasks apart from the objective on which it is fine-tuned. To overcome this issue, there are techniques under PEFT that can be employed.
+Selective fine-tuning (selecting only a subset of parameters to be trained again)
+Reparameterization techniques (Ex. LoRa, QLoRA)
+Adapters, Prompt tuning (Adding additional parameters to control the output)
+Why can’t we train our own model?
+According to Chinchilla, to train an LLM, it is recommended to train on 20 times the number of parameters of a model. Here, in this case, it is 20*3 billion, or 60 billion text tokens.
+Metrics
+The metric used for model evaluation depends on the task being performed. For example, ROUGE and BLEU scores are generally considered good metrics for text summarization. While there are other benchmarks like MMLU, HELM, and Big Bench, it is not feasible to test the fine-tuned models on these benchmarks, given the small scale and compute restrictions.
+It is advisable not to use LLMs for simple tasks like sentence classification, entity recognition, etc. Moving to LLMs from traditional ML algorithms and deep learning models comes at the cost of losing model interpretability, increasing model complexity, and increasing hardware costs.
+
+Source: Chang, S., et al. (2023). A Survey on Evaluation of Large Language Models. arXiv
+
+Conclusion
+Large Language Models (LLMs) have the potential to revolutionize the way Enterprises operate. With their ability to generate code, answer questions, and summarize conversations, LLMs can significantly improve productivity and efficiency. However, choosing the right LLM for a specific task can be a challenging task. It is helpful to leverage a framework that considers evaluating factors such as licenses, model memory requirements, performance for the task, and prompt engineering.
+It’s also important to note that the performance of the open-sourced models can’t be compared to commercial tools like ChatGPT, Bard, Claude v2, etc. As mentioned earlier in the blog, the models powering these tools are enormous (in terms of memory) and are trained extensively on closed datasets. It is important to be realistic about the performance of these LLMs.
