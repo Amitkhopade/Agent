@@ -1,0 +1,99 @@
+import streamlit as st
+import ollama
+from typing import List, Dict
+import time
+
+# Initialize session state variables if they don't exist
+if "messages" not in st.session_state:
+    st.session_state.messages = {}
+
+if "current_model" not in st.session_state:
+    st.session_state.current_model = None
+
+# Available models (pre-configured list as specified)
+AVAILABLE_MODELS = [
+    "nomic-embed-text:latest",
+    "deepseek-coder:1.3b",
+    "mistral:7b-instruct-v0.2-q3_K_M",
+    "deepseek-r1:1.5b",
+    "deepseek-r1:8b",
+    "phi3:mini"
+]
+
+def initialize_chat_history(model_name: str):
+    """Initialize chat history for a new model"""
+    if model_name not in st.session_state.messages:
+        st.session_state.messages[model_name] = []
+
+def get_ollama_response(model_name: str, prompt: str, messages: List[Dict]) -> str:
+    """Get response from Ollama model"""
+    try:
+        # Convert messages to the format expected by ollama
+        ollama_messages = [
+            {"role": msg["role"], "content": msg["content"]}
+            for msg in messages
+        ]
+        
+        # Add the new prompt
+        ollama_messages.append({"role": "user", "content": prompt})
+        
+        # Get the response from Ollama
+        response = ollama.chat(model=model_name, messages=ollama_messages)
+        return response['message']['content']
+    except Exception as e:
+        st.error(f"Error communicating with Ollama: {str(e)}")
+        return f"Error: {str(e)}"
+
+def main():
+    st.title("🤖 Local LLM Chat Interface")
+    st.subheader("Powered by Ollama")
+    
+    # Model selection
+    selected_model = st.selectbox(
+        "Select an LLM Model",
+        options=AVAILABLE_MODELS,
+        index=0 if st.session_state.current_model is None else AVAILABLE_MODELS.index(st.session_state.current_model),
+        help="Choose from available local Ollama models"
+    )
+    
+    # Initialize or switch model chat history
+    if st.session_state.current_model != selected_model:
+        st.session_state.current_model = selected_model
+        initialize_chat_history(selected_model)
+    
+    # Clear chat button
+    if st.button("Clear Chat History"):
+        st.session_state.messages[selected_model] = []
+        st.rerun()
+    
+    # Display chat messages
+    chat_container = st.container()
+    with chat_container:
+        for message in st.session_state.messages[selected_model]:
+            with st.chat_message(message["role"]):
+                st.write(message["content"])
+    
+    # Chat input
+    if prompt := st.chat_input("Type your message here..."):
+        # Add user message to chat
+        st.session_state.messages[selected_model].append({"role": "user", "content": prompt})
+        
+        # Display user message
+        with st.chat_message("user"):
+            st.write(prompt)
+        
+        # Get and display assistant response
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                response = get_ollama_response(
+                    selected_model,
+                    prompt,
+                    st.session_state.messages[selected_model]
+                )
+                st.write(response)
+                
+        # Add assistant response to chat history
+        st.session_state.messages[selected_model].append({"role": "assistant", "content": response})
+
+if __name__ == "__main__":
+    main()
